@@ -90,12 +90,13 @@
 
             try {
                 const device = await navigator.bluetooth.requestDevice({
-                    filters: [{ services: ['printer_service'] }]
+                    acceptAllDevices: true,
+                    optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb'] // Remplacez par le UUID de votre service d'imprimante
                 });
 
                 const server = await device.gatt.connect();
-                const service = await server.getPrimaryService('printer_service');
-                const characteristic = await service.getCharacteristic('printer_characteristic');
+                const service = await server.getPrimaryService('000018f0-0000-1000-8000-00805f9b34fb'); // Remplacez par le UUID de votre service d'imprimante
+                const characteristic = await service.getCharacteristic('00002af1-0000-1000-8000-00805f9b34fb'); // Remplacez par le UUID de votre caractéristique d'imprimante
 
                 const encoder = new TextEncoder();
                 const data = encoder.encode(ticketContent);
