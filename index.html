@@ -132,17 +132,3 @@
     </script>
 </body>
 </html>
-
-                const encoder = new TextEncoder();
-                const data = encoder.encode(ticketContent);
-
-                await characteristic.writeValue(data);
-                alert('Impression reussie');
-            } catch (error) {
-                console.error('Erreur d\'impression', error);
-                alert('Erreur d\'impression');
-            }
-        }
-    </script>
-</body>
-</html>
