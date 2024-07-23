@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Cloture de Caisse</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 20px;
+        }
+        .ticket {
+            margin-top: 20px;
+            padding: 20px;
+            border: 1px solid #000;
+        }
+        label {
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Cloture de Caisse</h1>
+        <form id="caisseForm">
+            <h3>Caisse 1</h3>
+            <label for="caisse1Cb">Carte Bleue:</label>
+            <input type="number" id="caisse1Cb" required>
+            <label for="caisse1Espece">Espece:</label>
+            <input type="number" id="caisse1Espece" required>
+            <label for="caisse1TicketsResto">Tickets Resto:</label>
+            <input type="number" id="caisse1TicketsResto" required>
+
+            <h3>Caisse 2</h3>
+            <label for="caisse2Cb">Carte Bleue:</label>
+            <input type="number" id="caisse2Cb" required>
+            <label for="caisse2Espece">Espece:</label>
+            <input type="number" id="caisse2Espece" required>
+            <label for="caisse2TicketsResto">Tickets Resto:</label>
+            <input type="number" id="caisse2TicketsResto" required>
+
+            <button type="button" onclick="genererTicket()">Generer Ticket</button>
+        </form>
+        <div id="ticket" class="ticket" style="display:none;"></div>
+    </div>
+
+    <script>
+        function genererTicket() {
+            const caisse1Cb = parseFloat(document.getElementById('caisse1Cb').value) || 0;
+            const caisse1Espece = parseFloat(document.getElementById('caisse1Espece').value) || 0;
+            const caisse1TicketsResto = parseFloat(document.getElementById('caisse1TicketsResto').value) || 0;
+            const caisse2Cb = parseFloat(document.getElementById('caisse2Cb').value) || 0;
+            const caisse2Espece = parseFloat(document.getElementById('caisse2Espece').value) || 0;
+            const caisse2TicketsResto = parseFloat(document.getElementById('caisse2TicketsResto').value) || 0;
+
+            const totalCb = caisse1Cb + caisse2Cb;
+            const totalEspece = caisse1Espece - caisse1TicketsResto - caisse2Cb;
+            const totalTicketsResto = caisse1TicketsResto + caisse2TicketsResto;
+
+            const today = new Date();
+            const dateString = today.toLocaleDateString('fr-FR');
+
+            const ticketDiv = document.getElementById('ticket');
+            ticketDiv.innerHTML = `
+                <h2>Cloture de Caisse</h2>
+                <p>Date: ${dateString}</p>
+                <p><strong>Carte Bleue:</strong> ${totalCb.toFixed(2)} euros</p>
+                <p><strong>Espece:</strong> ${totalEspece.toFixed(2)} euros</p>
+                <p><strong>Tickets Resto:</strong> ${totalTicketsResto.toFixed(2)} euros</p>
+                <button onclick="imprimerTicket()">Imprimer</button>
+            `;
+            ticketDiv.style.display = 'block';
+        }
+
+        async function imprimerTicket() {
+            const ticketContent = document.getElementById('ticket').innerText;
+
+            try {
+                const device = await navigator.bluetooth.requestDevice({
+                    filters: [{ services: ['printer_service'] }]
+                });
+
+                const server = await device.gatt.connect();
+                const service = await server.getPrimaryService('printer_service');
+                const characteristic = await service.getCharacteristic('printer_characteristic');
+
+                const encoder = new TextEncoder();
+                const data = encoder.encode(ticketContent);
+
+                await characteristic.writeValue(data);
+                alert('Impression reussie');
+            } catch (error) {
+                console.error('Erreur d\'impression', error);
+                alert('Erreur d\'impression');
+            }
+        }
+    </script>
+</body>
+</html>
