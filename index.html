@@ -31,6 +31,8 @@
             font-weight: bold;
         }
     </style>
+    <!-- Inclure le SDK StarPRNT -->
+    <script src="https://cdn.jsdelivr.net/npm/starprnt/starprnt.min.js"></script>
 </head>
 <body>
     <div class="container">
@@ -87,16 +89,49 @@
 
         async function imprimerTicket() {
             const ticketContent = document.getElementById('ticket').innerText;
-
             try {
-                const device = await navigator.bluetooth.requestDevice({
-                    acceptAllDevices: true,
-                    optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb'] // Remplacez par le UUID de votre service d'imprimante
+                const printer = new StarWebPrintTrader({
+                    url: 'http://192.168.0.10', // Remplacez par l'adresse IP de votre imprimante Star
+                    onReceive: function (response) {
+                        if (response.success) {
+                            alert('Impression reussie');
+                        } else {
+                            alert('Erreur d\'impression: ' + response.message);
+                        }
+                    },
+                    onError: function (response) {
+                        alert('Erreur de communication: ' + response.message);
+                    }
                 });
 
-                const server = await device.gatt.connect();
-                const service = await server.getPrimaryService('000018f0-0000-1000-8000-00805f9b34fb'); // Remplacez par le UUID de votre service d'imprimante
-                const characteristic = await service.getCharacteristic('00002af1-0000-1000-8000-00805f9b34fb'); // Remplacez par le UUID de votre caractéristique d'imprimante
+                printer.onReceive = function(response) {
+                    if (response.success) {
+                        alert('Impression reussie');
+                    } else {
+                        alert('Erreur d\'impression: ' + response.message);
+                    }
+                };
+
+                printer.onError = function(response) {
+                    alert('Erreur: ' + response.message);
+                };
+
+                const printObj = {
+                    request: {
+                        title: 'Cloture de Caisse',
+                        text: ticketContent
+                    }
+                };
+
+                printer.sendMessage(JSON.stringify(printObj));
+            } catch (error) {
+                console.error('Erreur d\'impression', error);
+                alert('Erreur d\'impression');
+            }
+        }
+    </script>
+</body>
+</html>
 
                 const encoder = new TextEncoder();
                 const data = encoder.encode(ticketContent);
