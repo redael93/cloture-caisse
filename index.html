@@ -31,8 +31,6 @@
             font-weight: bold;
         }
     </style>
-    <!-- Inclure le SDK StarPRNT -->
-    <script src="https://cdn.jsdelivr.net/npm/starprnt/starprnt.min.js"></script>
 </head>
 <body>
     <div class="container">
@@ -82,48 +80,28 @@
                 <p><strong>Carte Bleue:</strong> ${totalCb.toFixed(2)} euros</p>
                 <p><strong>Espece:</strong> ${totalEspece.toFixed(2)} euros</p>
                 <p><strong>Tickets Resto:</strong> ${totalTicketsResto.toFixed(2)} euros</p>
-                <button onclick="imprimerTicket()">Imprimer</button>
+                <button type="button" onclick="imprimerTicket()">Imprimer</button>
             `;
             ticketDiv.style.display = 'block';
         }
 
         async function imprimerTicket() {
             const ticketContent = document.getElementById('ticket').innerText;
+
             try {
-                const printer = new StarWebPrintTrader({
-                    url: 'http://192.168.0.10', // Remplacez par l'adresse IP de votre imprimante Star
-                    onReceive: function (response) {
-                        if (response.success) {
-                            alert('Impression reussie');
-                        } else {
-                            alert('Erreur d\'impression: ' + response.message);
-                        }
-                    },
-                    onError: function (response) {
-                        alert('Erreur de communication: ' + response.message);
-                    }
+                const device = await navigator.bluetooth.requestDevice({
+                    filters: [{ services: ['00001101-0000-1000-8000-00805f9b34fb'] }] // UUID du service Bluetooth SPP
                 });
 
-                printer.onReceive = function(response) {
-                    if (response.success) {
-                        alert('Impression reussie');
-                    } else {
-                        alert('Erreur d\'impression: ' + response.message);
-                    }
-                };
+                const server = await device.gatt.connect();
+                const service = await server.getPrimaryService('00001101-0000-1000-8000-00805f9b34fb');
+                const characteristic = await service.getCharacteristic('00002a6f-0000-1000-8000-00805f9b34fb');
 
-                printer.onError = function(response) {
-                    alert('Erreur: ' + response.message);
-                };
+                const encoder = new TextEncoder();
+                const data = encoder.encode(ticketContent);
 
-                const printObj = {
-                    request: {
-                        title: 'Cloture de Caisse',
-                        text: ticketContent
-                    }
-                };
-
-                printer.sendMessage(JSON.stringify(printObj));
+                await characteristic.writeValue(data);
+                alert('Impression reussie');
             } catch (error) {
                 console.error('Erreur d\'impression', error);
                 alert('Erreur d\'impression');
